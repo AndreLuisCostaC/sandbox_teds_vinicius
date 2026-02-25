@@ -27,20 +27,9 @@ node_modules/
 
 .venv
 
-# Ignore for the frontend-ecom
-src/frontend-ecom/node_modules
-src/frontend-ecom/.next
-src/frontend-ecom/out
-src/frontend-ecom/build
-
-# Ignore for the frontend-admin
-src/frontend-admin/node_modules
-src/frontend-admin/.next
-src/frontend-admin/out
-src/frontend-admin/build
-
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Ignore for the frontend-ecom
 # dependencies
 src/frontend-ecom/node_modules
 
@@ -82,3 +71,44 @@ src/frontend-ecom/.vercel
 src/frontend-ecom/*.tsbuildinfo
 src/frontend-ecom/next-env.d.ts
 
+# Ignore for the frontend-admin
+# dependencies
+src/frontend-admin/node_modules
+
+src/frontend-admin/.pnp
+src/frontend-admin.pnp.*
+src/frontend-admin.yarn/*
+src/frontend-admin/!.yarn/patches
+src/frontend-admin/!.yarn/plugins
+src/frontend-admin/!.yarn/releases
+src/frontend-admin/!.yarn/versions
+
+# testing
+src/frontend-admin/coverage
+
+# next.js
+src/frontend-admin/.next/
+src/frontend-admin/out/
+
+# production
+src/frontend-admin/build
+
+# misc
+src/frontend-admin/.DS_Store
+src/frontend-admin/*.pem
+
+# debug
+src/frontend-admin/npm-debug.log*
+src/frontend-admin/yarn-debug.log*
+src/frontend-admin/yarn-error.log*
+src/frontend-admin/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+src/frontend-admin/.env*
+
+# vercel
+src/frontend-admin/.vercel
+
+# typescript
+src/frontend-admin/*.tsbuildinfo
+src/frontend-admin/next-env.d.ts
