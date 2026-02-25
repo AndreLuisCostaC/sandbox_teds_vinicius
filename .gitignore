@@ -26,3 +26,59 @@ node_modules/
 .DS_Store
 
 .venv
+
+# Ignore for the frontend-ecom
+src/frontend-ecom/node_modules
+src/frontend-ecom/.next
+src/frontend-ecom/out
+src/frontend-ecom/build
+
+# Ignore for the frontend-admin
+src/frontend-admin/node_modules
+src/frontend-admin/.next
+src/frontend-admin/out
+src/frontend-admin/build
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+src/frontend-ecom/node_modules
+
+src/frontend-ecom/.pnp
+src/frontend-ecom.pnp.*
+src/frontend-ecom.yarn/*
+src/frontend-ecom/!.yarn/patches
+src/frontend-ecom/!.yarn/plugins
+src/frontend-ecom/!.yarn/releases
+src/frontend-ecom/!.yarn/versions
+
+# testing
+src/frontend-ecom/coverage
+
+# next.js
+src/frontend-ecom/.next/
+src/frontend-ecom/out/
+
+# production
+src/frontend-ecom/build
+
+# misc
+src/frontend-ecom/.DS_Store
+src/frontend-ecom/*.pem
+
+# debug
+src/frontend-ecom/npm-debug.log*
+src/frontend-ecom/yarn-debug.log*
+src/frontend-ecom/yarn-error.log*
+src/frontend-ecom/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+src/frontend-ecom/.env*
+
+# vercel
+src/frontend-ecom/.vercel
+
+# typescript
+src/frontend-ecom/*.tsbuildinfo
+src/frontend-ecom/next-env.d.ts
+
