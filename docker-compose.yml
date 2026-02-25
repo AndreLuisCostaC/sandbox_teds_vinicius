@@ -1,0 +1,161 @@
+name: prodgrade
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: db/Dockerfile
+      target: dev
+    container_name: prodgrade-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - db-vol:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
+
+  chromadb:
+    build:
+      context: .
+      dockerfile: vector-db/Dockerfile
+      target: dev
+    container_name: prodgrade-chromadb
+    ports:
+      - "${CHROMA_PORT}:8000"
+    volumes:
+      - chroma-vol:/chroma/chroma
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8000'",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      target: dev
+    container_name: prodgrade-backend
+    environment:
+      APP_ENV: ${APP_ENV}
+      APP_NAME: ${APP_NAME}
+      DATABASE_URL: ${DATABASE_URL}
+      DB_URL: ${DB_URL}
+      CHROMA_URL: ${CHROMA_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE}
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT}:8000"
+    volumes:
+      - ./src/backend-generic:/app
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
+
+  store-frontend:
+    build:
+      context: .
+      dockerfile: apps/store-frontend/Dockerfile
+      target: dev
+    container_name: prodgrade-store-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${STORE_FRONTEND_PORT}:3000"
+    volumes:
+      - ./src/frontend-ecom:/app
+      - store-node-modules:/app/node_modules
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3000').then(() => process.exit(0)).catch(() => process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
+
+  erp-frontend:
+    build:
+      context: .
+      dockerfile: apps/erp-frontend/Dockerfile
+      target: dev
+    container_name: prodgrade-erp-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${ERP_FRONTEND_PORT}:3001"
+    volumes:
+      - ./src/frontend-admin:/app
+      - erp-node-modules:/app/node_modules
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3001').then(() => process.exit(0)).catch(() => process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    driver: bridge
+
+volumes:
+  db-vol:
+  chroma-vol:
+  store-node-modules:
+  erp-node-modules:

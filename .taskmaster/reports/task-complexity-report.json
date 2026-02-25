@@ -1,0 +1,93 @@
+{
+	"meta": {
+		"generatedAt": "2026-02-25T03:37:07.209Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Project Setup and Docker Infrastructure",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into: 1) Monorepo folder structure and initial Dockerfiles for each service with multi-stage builds, 2) Root docker-compose.yml with all services, networks, volumes, healthchecks, 3) .env.example with all environment variables and secrets, 4) Documentation and initial smoke test scripts for docker-compose up.",
+			"reasoning": "Involves coordinating 5 complex services (2 Next.js, FastAPI, Postgres, ChromaDB) with multi-stage Dockerfiles, healthchecks, volumes, and env management in a monorepo. High coordination effort and potential networking/persistence issues make this moderately complex."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "PostgreSQL Schema and Alembic Migrations",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into: 1) SQLAlchemy models for core entities (User, Role, Product, Category), 2) Complex entities with relationships (Order, Inventory, Cart systems), 3) Indexes, constraints, and validation logic, 4) Alembic migration configuration and initial migrations, 5) Seed data and migration testing scripts.",
+			"reasoning": "11 interconnected entities with complex relationships (Order→OrderItem→ProductVariant→Inventory), multiple indexes, constraints, Alembic setup, and seeding. High risk of schema design errors affecting entire system."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "FastAPI Backend Core with JWT Authentication",
+			"complexityScore": 7,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Split into: 1) FastAPI app initialization, CORS, logging, exception handlers, 2) JWT middleware, bcrypt, and current_user Depends(), 3) RBAC role checks, rate limiting with slowapi, and auth endpoint testing.",
+			"reasoning": "Multiple interconnected concerns: auth middleware, RBAC, rate limiting, structured logging, CORS. Critical security foundation with high impact if implemented incorrectly."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Product CRUD API Endpoints",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break into: 1) Pydantic schemas and validation logic, 2) Core CRUD endpoints with async SQLAlchemy, 3) Advanced filtering/pagination/query params and admin permissions.",
+			"reasoning": "Standard CRUD but with complex filtering (category, price ranges), pagination, async sessions, and role-based permissions. Moderate complexity with good testing coverage."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Consumer Storefront - Catalog and Search UI",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Divide into: 1) Hero banner and responsive ProductGrid with Tailwind, 2) FilterSidebar with category/price controls, 3) Sorting dropdown and SWR/React Query data fetching, 4) Infinite scroll with IntersectionObserver and empty states.",
+			"reasoning": "Multiple responsive UI components, complex state management, data fetching, and infinite scroll. Frontend-heavy but follows established patterns with Tailwind/shadcn."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Semantic Search with ChromaDB and LangChain",
+			"complexityScore": 9,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: 1) Embedding service setup (OpenAI/sentence-transformers), 2) ChromaDB integration and indexing endpoints, 3) Hybrid search (semantic+keyword) implementation, 4) Background reindexing and PostgreSQL triggers, 5) Performance testing and sync validation.",
+			"reasoning": "Advanced AI/ML integration with vector embeddings, hybrid search, database triggers, background tasks, and real-time sync. High technical complexity and potential performance issues."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Shopping Cart Implementation",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Split into: 1) Backend cart endpoints and stock validation, 2) Frontend CartContext with localStorage sync, 3) Cart UI slide-over panel with quantity controls, 4) Guest→auth user cart merge and persistence testing.",
+			"reasoning": "Complex state synchronization between localStorage/backend, stock validation across services, real-time calculations. High UX impact with edge cases (guest login, stock changes)."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Atomic Order Processing and Payment Integration",
+			"complexityScore": 9,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into: 1) Transactional order creation with stock validation, 2) Inventory deduction and rollback logic, 3) Stripe payment intent creation, 4) Webhook handling for payment confirmation, 5) Nested transactions with savepoints and full test suite.",
+			"reasoning": "Mission-critical ACID transactions across multiple tables/services with payment integration. Extremely high risk of race conditions, partial failures, and financial loss."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "ERP Panel - Dashboard and KPIs",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break into: 1) Authentication, RBAC routing, and login page, 2) Dashboard KPIs and Recharts visualizations with date filters, 3) Real-time updates with SWR mutate and low stock alerts.",
+			"reasoning": "Standard dashboard with charts, filters, and real-time updates. Established patterns (shadcn/ui, Recharts) reduce complexity but requires good data aggregation."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "ERP Product and Order Management + Security Hardening",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Split into: 1) ERP product CRUD forms with image upload, 2) Order management with status workflows, 3) Inventory movement logging, 4) Security hardening (CSRF, sanitization, headers), 5) Load testing and security scanning.",
+			"reasoning": "Combines complex forms, workflows, image upload, audit logging, plus comprehensive security audit. Multiple failure domains increase overall complexity."
+		}
+	]
+}
