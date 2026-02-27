@@ -63,3 +63,19 @@ View logs:
 ```bash
 docker compose logs -f
 ```
+
+## Load and Security Validation
+
+Run end-to-end load tests (search, orders, ERP dashboard APIs):
+
+```bash
+./scripts/run-load-tests.sh
+```
+
+Run security-oriented checks (Bandit + npm audit):
+
+```bash
+./scripts/run-security-scans.sh
+```
+
+Both commands write timestamped reports under `reports/`.

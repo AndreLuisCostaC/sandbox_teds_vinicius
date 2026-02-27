@@ -12,6 +12,7 @@ from app.models.role import Role
 from app.models.user import User
 from app.ratelimit import AUTH_RATE_LIMIT, limiter
 from app.security import create_access_token, hash_password, verify_password
+from app.security_hardening import sanitize_text
 
 
 class RegisterRequest(BaseModel):
@@ -38,14 +39,25 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register(
     request: Request, payload: RegisterRequest, db: Session = Depends(get_db)
 ) -> TokenResponse:
-    existing_user = db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
+    email = sanitize_text(payload.email)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Email is required",
+        )
+    full_name = sanitize_text(payload.full_name)
+    existing_user = db.execute(
+        select(User).where(User.email == email)
+    ).scalar_one_or_none()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
 
-    employee_role = db.execute(select(Role).where(Role.name == "employee")).scalar_one_or_none()
+    employee_role = db.execute(
+        select(Role).where(Role.name == "employee")
+    ).scalar_one_or_none()
     if employee_role is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -53,9 +65,9 @@ async def register(
         )
 
     user = User(
-        email=str(payload.email).lower(),
+        email=str(email).lower(),
         hashed_password=hash_password(payload.password),
-        full_name=payload.full_name,
+        full_name=full_name,
         is_active=True,
         role_id=employee_role.id,
     )
@@ -66,13 +78,20 @@ async def register(
     token = create_access_token(subject=str(user.id))
     return TokenResponse(access_token=token)
 
-
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit(AUTH_RATE_LIMIT)
 async def login(
     request: Request, payload: LoginRequest, db: Session = Depends(get_db)
 ) -> TokenResponse:
-    user = db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
+    email = sanitize_text(payload.email)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
+    user = db.execute(
+        select(User).where(User.email == email)
+    ).scalar_one_or_none()
     if user is None or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

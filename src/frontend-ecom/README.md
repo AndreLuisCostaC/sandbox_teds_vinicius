@@ -20,6 +20,12 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Hydration Note
+
+`app/layout.tsx` uses `suppressHydrationWarning` on `<html>` and `<body>`.
+This is intentional to avoid noisy hydration mismatch warnings when browser-only mutations alter root attributes during client boot (for example, extension-injected attributes).
+Only remove it if root-level server and client markup are guaranteed to match in all environments.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

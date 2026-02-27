@@ -1,5 +1,6 @@
 type ProductCard = {
   id: number;
+  variantId: number | null;
   name: string;
   description: string;
   price: string;
@@ -7,9 +8,19 @@ type ProductCard = {
   category: string;
 };
 
+type ProductCartState = {
+  quantity: number;
+};
+
 type ProductGridProps = {
   products: ProductCard[];
   isLoading?: boolean;
+  cartState?: Record<number, ProductCartState>;
+  onAddToCart?: (product: ProductCard) => void;
+  onIncrease?: (product: ProductCard) => void;
+  onDecrease?: (product: ProductCard) => void;
+  onRemove?: (product: ProductCard) => void;
+  isSyncingCart?: boolean;
 };
 
 function ProductSkeletonCard() {
@@ -26,7 +37,16 @@ function ProductSkeletonCard() {
   );
 }
 
-export default function ProductGrid({ products, isLoading = false }: ProductGridProps) {
+export default function ProductGrid({
+  products,
+  isLoading = false,
+  cartState = {},
+  onAddToCart,
+  onIncrease,
+  onDecrease,
+  onRemove,
+  isSyncingCart = false,
+}: ProductGridProps) {
   return (
     <section aria-label="Product grid" className="space-y-4">
       <div className="flex items-center justify-between">
@@ -56,6 +76,44 @@ export default function ProductGrid({ products, isLoading = false }: ProductGrid
                 <h3 className="text-lg font-medium text-slate-900">{item.name}</h3>
                 <p className="text-sm text-slate-600">{item.description}</p>
                 <p className="pt-1 text-base font-semibold text-sky-700">{item.price}</p>
+                {item.variantId != null && cartState[item.variantId] ? (
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onDecrease?.(item)}
+                      disabled={isSyncingCart}
+                      className="rounded border border-slate-300 px-2 py-1 text-sm text-slate-700 disabled:opacity-50"
+                    >
+                      -
+                    </button>
+                    <span className="text-sm text-slate-700">{cartState[item.variantId]?.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => onIncrease?.(item)}
+                      disabled={isSyncingCart}
+                      className="rounded border border-slate-300 px-2 py-1 text-sm text-slate-700 disabled:opacity-50"
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onRemove?.(item)}
+                      disabled={isSyncingCart}
+                      className="ml-auto rounded border border-red-200 px-2 py-1 text-xs text-red-700 disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onAddToCart?.(item)}
+                    disabled={isSyncingCart || item.variantId == null}
+                    className="mt-3 w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {item.variantId == null ? "Unavailable" : "Add to cart"}
+                  </button>
+                )}
               </div>
             </article>
             ))}

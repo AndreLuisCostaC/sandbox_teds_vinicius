@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Iterable
+from uuid import uuid4
 
 from sqlalchemy import create_engine, exc, inspect, text
 
@@ -32,6 +33,8 @@ def assert_raises_integrity(connection, statement: str, params: dict | None = No
 def main() -> int:
     database_url = require("DATABASE_URL")
     engine = create_engine(database_url, future=True)
+    unique = uuid4().hex[:8]
+    seeded_email = f"seed-test-{unique}@example.com"
 
     with engine.connect() as conn:
         inspector = inspect(conn)
@@ -73,7 +76,7 @@ def main() -> int:
                 """
             ),
             {
-                "email": "seed-test@example.com",
+                "email": seeded_email,
                 "pwd": "hashed",
                 "name": "Seed Test",
                 "role_id": admin_role_id,
@@ -85,9 +88,9 @@ def main() -> int:
             conn,
             """
             INSERT INTO users (email, hashed_password, full_name, is_active, role_id, created_at, updated_at)
-            VALUES ('seed-test@example.com', 'hashed', 'Duplicate', true, :role_id, NOW(), NOW())
+            VALUES (:email, 'hashed', 'Duplicate', true, :role_id, NOW(), NOW())
             """,
-            {"role_id": admin_role_id},
+            {"role_id": admin_role_id, "email": seeded_email},
         )
 
         # Quantity constraint checks.
@@ -95,10 +98,11 @@ def main() -> int:
             text(
                 """
                 INSERT INTO categories (name, description, created_at, updated_at)
-                VALUES ('seed-test-category', NULL, NOW(), NOW())
+                VALUES (:name, NULL, NOW(), NOW())
                 RETURNING id
                 """
-            )
+            ),
+            {"name": f"seed-test-category-{unique}"},
         ).scalar_one()
         product_id = conn.execute(
             text(
@@ -114,11 +118,11 @@ def main() -> int:
             text(
                 """
                 INSERT INTO product_variants (product_id, sku, name, price, is_active, created_at, updated_at)
-                VALUES (:product_id, 'seed-test-sku', 'default', 12.50, true, NOW(), NOW())
+                VALUES (:product_id, :sku, 'default', 12.50, true, NOW(), NOW())
                 RETURNING id
                 """
             ),
-            {"product_id": product_id},
+            {"product_id": product_id, "sku": f"seed-test-sku-{unique}"},
         ).scalar_one()
         conn.commit()
 
@@ -131,7 +135,81 @@ def main() -> int:
             {"variant_id": variant_id},
         )
 
-        print("Migration validation passed: seeds, indexes, FK, uniqueness, and constraints are OK.")
+        # Sync queue/trigger checks.
+        trigger_category_id = conn.execute(
+            text(
+                """
+                INSERT INTO categories (name, description, created_at, updated_at)
+                VALUES (:name, NULL, NOW(), NOW())
+                RETURNING id
+                """
+            ),
+            {"name": f"trigger-test-category-{unique}"},
+        ).scalar_one()
+        trigger_product_id = conn.execute(
+            text(
+                """
+                INSERT INTO products (name, description, price, is_active, category_id, created_at, updated_at)
+                VALUES ('trigger-test-product', NULL, 99.00, true, :category_id, NOW(), NOW())
+                RETURNING id
+                """
+            ),
+            {"category_id": trigger_category_id},
+        ).scalar_one()
+        conn.commit()
+
+        op_create = conn.execute(
+            text(
+                """
+                SELECT operation
+                FROM products_sync_queue
+                WHERE product_id = :product_id
+                ORDER BY id DESC
+                LIMIT 1
+                """
+            ),
+            {"product_id": trigger_product_id},
+        ).scalar_one()
+        assert op_create == "create", "Expected create operation in products_sync_queue."
+
+        conn.execute(
+            text("UPDATE products SET price = 109.00 WHERE id = :product_id"),
+            {"product_id": trigger_product_id},
+        )
+        conn.commit()
+        op_update = conn.execute(
+            text(
+                """
+                SELECT operation
+                FROM products_sync_queue
+                WHERE product_id = :product_id
+                ORDER BY id DESC
+                LIMIT 1
+                """
+            ),
+            {"product_id": trigger_product_id},
+        ).scalar_one()
+        assert op_update == "update", "Expected update operation in products_sync_queue."
+
+        conn.execute(text("DELETE FROM products WHERE id = :product_id"), {"product_id": trigger_product_id})
+        conn.commit()
+        op_delete = conn.execute(
+            text(
+                """
+                SELECT operation
+                FROM products_sync_queue
+                WHERE product_id = :product_id
+                ORDER BY id DESC
+                LIMIT 1
+                """
+            ),
+            {"product_id": trigger_product_id},
+        ).scalar_one()
+        assert op_delete == "delete", "Expected delete operation in products_sync_queue."
+
+        print(
+            "Migration validation passed: seeds, indexes, FK, uniqueness, constraints, and sync triggers are OK."
+        )
 
     return 0
 

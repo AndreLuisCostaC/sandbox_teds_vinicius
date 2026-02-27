@@ -343,7 +343,7 @@
         "dependencies": [
           "4"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -351,9 +351,10 @@
             "description": "Create embedding service using OpenAI text-embedding-3-small or sentence-transformers for product data.",
             "dependencies": [],
             "details": "Install langchain-openai or sentence-transformers. Implement embedding function class with batch processing support. Configure API keys via environment variables. Test embedding generation on sample product descriptions.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify embeddings for 10 sample products match expected dimensions (1536 for OpenAI). Measure embedding time < 100ms per product.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T02:57:02.091Z"
           },
           {
             "id": 2,
@@ -363,9 +364,10 @@
               1
             ],
             "details": "Use langchain-chroma to create persistent Chroma client connected to Docker service. Implement endpoint to embed product data and add to collection with id, metadata, document. Add admin authentication middleware. Support delete/update operations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "POST index-vector succeeds for admin user, fails for non-admin (403). Query collection verifies product stored with correct embedding.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T02:57:13.857Z"
           },
           {
             "id": 3,
@@ -375,9 +377,10 @@
               2
             ],
             "details": "Use Chroma similarity_search for semantic results with query embedding. Add PostgreSQL full-text search (tsvector) for keyword fallback. Merge and rank results by score. Support pagination and filters. Limit total results to 20.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Search 'comfortable running shoes' returns relevant semantic matches. Keyword-only terms fallback to PostgreSQL results. Query time < 200ms.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T02:57:24.845Z"
           },
           {
             "id": 4,
@@ -385,9 +388,10 @@
             "description": "Create PostgreSQL triggers to detect product create/update/delete and queue reindexing tasks.",
             "dependencies": [],
             "details": "Add products_sync_queue table with product_id, operation (create/update/delete), timestamp. Implement AFTER INSERT/UPDATE/DELETE triggers on products table to insert queue records. Use NOTIFY/LISTEN for real-time detection in FastAPI.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually insert/update/delete product, verify queue record created. Confirm trigger fires on concurrent transactions.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T02:57:35.767Z"
           },
           {
             "id": 5,
@@ -399,14 +403,16 @@
               4
             ],
             "details": "Use FastAPI BackgroundTasks or Celery to poll/monitor sync queue. On queue item, call index-vector endpoint or direct Chroma update/delete. Add sync validation endpoint showing queue lag. Load test with 100 concurrent searches.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Update product via CRUD, verify background task reindexes within 5s. Search reflects changes. End-to-end: create→index→search cycle. Measure P95 query latency < 200ms.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T02:57:48.286Z"
           }
         ],
         "complexity": 9,
         "recommendedSubtasks": 5,
-        "expansionPrompt": "Break down into: 1) Embedding service setup (OpenAI/sentence-transformers), 2) ChromaDB integration and indexing endpoints, 3) Hybrid search (semantic+keyword) implementation, 4) Background reindexing and PostgreSQL triggers, 5) Performance testing and sync validation."
+        "expansionPrompt": "Break down into: 1) Embedding service setup (OpenAI/sentence-transformers), 2) ChromaDB integration and indexing endpoints, 3) Hybrid search (semantic+keyword) implementation, 4) Background reindexing and PostgreSQL triggers, 5) Performance testing and sync validation.",
+        "updatedAt": "2026-02-26T02:57:48.286Z"
       },
       {
         "id": "7",
@@ -419,7 +425,7 @@
           "3",
           "5"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -430,9 +436,10 @@
               4
             ],
             "details": "Create POST /carts for new carts (guest UUID or user_id), POST /carts/{cart_id}/items with stock validation via /products/{id}/stock, PATCH/DELETE /carts/{cart_id}/items/{item_id}. Use async SQLAlchemy. Return 409 if quantity exceeds available stock.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test cart creation for guest/user, add item with sufficient/insufficient stock (expect 409), update/delete items, verify inventory not deducted prematurely.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:06:00.169Z"
           },
           {
             "id": 2,
@@ -442,9 +449,10 @@
               1
             ],
             "details": "Use useReducer for cart state, localStorage for guest carts (key: cart_uuid), sync to backend on login/add item for auth users via fetch to /carts endpoints. Implement real-time subtotal calculation on state changes. Handle stock errors with toast notifications.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Add items as guest, refresh - persists; login - merges to backend; change quantity - subtotal updates; stock error blocks add and shows message.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:11:53.246Z"
           },
           {
             "id": 3,
@@ -454,9 +462,10 @@
               2
             ],
             "details": "Use Headless UI or Tailwind for slide-over drawer triggered by cart icon. Show item image/name/price/quantity/subtotal per item + grand total. +/- buttons call CartContext updateItem, remove clears item. Persist open state in context. Mobile-responsive.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify panel opens/closes, quantity changes update UI/backend/subtotal instantly, remove empties item, empty cart shows message, responsive on mobile.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:15:11.981Z"
           },
           {
             "id": 4,
@@ -468,14 +477,16 @@
               3
             ],
             "details": "On login, POST localStorage cart to /carts/{user_id} merging duplicates (sum quantities, check stock). Clear localStorage post-sync. Write Cypress/Jest tests covering guest persistence, auth sync, stock blocks, subtotal accuracy, edge cases (offline, concurrent adds).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "E2E: Guest add→refresh→login→verify backend cart matches; stock insufficient during merge fails gracefully; quantity change mid-sync; empty cart persistence; multi-tab sync conflicts resolved.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:18:29.077Z"
           }
         ],
         "complexity": 7,
         "recommendedSubtasks": 4,
-        "expansionPrompt": "Split into: 1) Backend cart endpoints and stock validation, 2) Frontend CartContext with localStorage sync, 3) Cart UI slide-over panel with quantity controls, 4) Guest→auth user cart merge and persistence testing."
+        "expansionPrompt": "Split into: 1) Backend cart endpoints and stock validation, 2) Frontend CartContext with localStorage sync, 3) Cart UI slide-over panel with quantity controls, 4) Guest→auth user cart merge and persistence testing.",
+        "updatedAt": "2026-02-26T03:18:29.077Z"
       },
       {
         "id": "8",
@@ -489,7 +500,7 @@
           "3",
           "7"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -497,9 +508,10 @@
             "description": "Create POST /orders endpoint with @transactional decorator including cart stock validation and Order+OrderItems creation.",
             "dependencies": [],
             "details": "Use SQLAlchemy async session with @transactional. Validate cart items against Inventory.quantity using SELECT FOR UPDATE. Create Order and OrderItems if stock sufficient. Raise exception on validation failure for automatic rollback.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test valid cart creates order and items. Test insufficient stock returns 400 without creating records.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:56:38.626Z"
           },
           {
             "id": 2,
@@ -509,9 +521,10 @@
               1
             ],
             "details": "After order creation, UPDATE Inventory SET quantity = quantity - ordered_qty WHERE product_variant_id IN (...) AND quantity >= ordered_qty. Use database constraints to prevent negative stock. Ensure full rollback on any SQLAlchemy exception.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test successful deduction reduces stock. Test race condition simulation where concurrent checkouts handle stock correctly. Verify rollback restores stock on failure.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:56:38.635Z"
           },
           {
             "id": 3,
@@ -522,9 +535,10 @@
               2
             ],
             "details": "Create Payment(status='pending') record. Call stripe.PaymentIntent.create() with order total. Store client_secret in Payment record. On Stripe API error, raise exception for transaction rollback. Support Mercado Pago fallback via env var.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Mock Stripe success: verify Payment record with client_secret. Mock Stripe failure: verify full rollback (no order, no stock change, no Payment record).",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:56:38.641Z"
           },
           {
             "id": 4,
@@ -534,9 +548,10 @@
               1
             ],
             "details": "Verify Stripe webhook signature. On 'payment_intent.succeeded', UPDATE Payment SET status='confirmed', UPDATE Order SET status='paid'. Use database.savepoint() for nested transaction. Idempotent handling for duplicate webhooks. Return 200 always.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Simulate valid webhook: verify order status updates to 'paid'. Test invalid signature returns 400. Test duplicate webhook doesn't double-update.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:56:38.646Z"
           },
           {
             "id": 5,
@@ -549,14 +564,16 @@
               4
             ],
             "details": "Use session.begin_nested() or SAVEPOINT commands around payment integration. Test all failure paths: stock validation fail, inventory constraint violation, Stripe API error, webhook failures. Include concurrency tests with pytest-asyncio and multiple workers.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Full suite: success path, each failure rollback, concurrent checkouts (3+ parallel), webhook scenarios. Verify ACID properties: no overselling, no ghost orders, payment status sync. Load test 100 concurrent orders.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-26T03:56:38.652Z"
           }
         ],
         "complexity": 9,
         "recommendedSubtasks": 5,
-        "expansionPrompt": "Divide into: 1) Transactional order creation with stock validation, 2) Inventory deduction and rollback logic, 3) Stripe payment intent creation, 4) Webhook handling for payment confirmation, 5) Nested transactions with savepoints and full test suite."
+        "expansionPrompt": "Divide into: 1) Transactional order creation with stock validation, 2) Inventory deduction and rollback logic, 3) Stripe payment intent creation, 4) Webhook handling for payment confirmation, 5) Nested transactions with savepoints and full test suite.",
+        "updatedAt": "2026-02-26T03:56:38.652Z"
       },
       {
         "id": "9",
@@ -570,7 +587,7 @@
           "4",
           "8"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -578,9 +595,10 @@
             "description": "Create login page with JWT authentication fetch, middleware for token verification, and RBAC redirects based on user.role using shadcn/ui components.",
             "dependencies": [],
             "details": "Use Next.js middleware to parse/verify JWT from cookies as shown in search results[1][2]. Implement /login page with form, fetch to API for token. Add protected routes redirecting admin to dashboard, employee to limited view. Store token in httpOnly cookie.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test login success stores token and redirects by role. Verify invalid credentials shows error. Test middleware blocks unauth access to /dashboard.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-27T02:37:38.218Z"
           },
           {
             "id": 2,
@@ -590,9 +608,10 @@
               1
             ],
             "details": "Create KPI cards with metrics from /api/sales, /api/products/top, /api/inventory/low. Add date picker for revenue filtering. Implement Recharts LineChart/BarChart for sales trends over time periods. Use responsive Tailwind grid layout.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Login as employee - verify KPIs load with correct numbers. Test date filter updates revenue chart dynamically. Confirm top products list shows correctly. Check responsive layout on mobile.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-27T02:37:38.253Z"
           },
           {
             "id": 3,
@@ -603,14 +622,16 @@
               2
             ],
             "details": "Configure SWR hooks for all KPI endpoints with mutate function. Listen to WebSocket or polling for new orders to trigger mutate(). Display low stock alerts as toast notifications when inventory < threshold. Ensure updates reflect instantly across cards/charts.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Simulate new order - verify all sales/revenue KPIs update real-time. Test low stock alert appears for products <10 units. Confirm SWR cache invalidation works on manual refresh.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-27T02:37:38.261Z"
           }
         ],
         "complexity": 6,
         "recommendedSubtasks": 3,
-        "expansionPrompt": "Break into: 1) Authentication, RBAC routing, and login page, 2) Dashboard KPIs and Recharts visualizations with date filters, 3) Real-time updates with SWR mutate and low stock alerts."
+        "expansionPrompt": "Break into: 1) Authentication, RBAC routing, and login page, 2) Dashboard KPIs and Recharts visualizations with date filters, 3) Real-time updates with SWR mutate and low stock alerts.",
+        "updatedAt": "2026-02-27T02:37:38.261Z"
       },
       {
         "id": "10",
@@ -625,7 +646,7 @@
           "8",
           "9"
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -658,9 +679,10 @@
               2
             ],
             "details": "Backend: Extend product/order endpoints to create InventoryMovement records on stock changes (create/update/delete product, order status). Frontend: Ensure UI shows current inventory. Use SQLAlchemy async for logging. Audit trail with timestamps, user_id, delta_quantity.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create product: movement logged. Update order to shipped: quantity deducted, movement logged. Verify logs queryable and accurate.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-27T02:57:39.862Z"
           },
           {
             "id": 4,
@@ -672,9 +694,10 @@
               3
             ],
             "details": "Backend: Integrate CSRF middleware, bleach for HTML sanitization on inputs, helmet.js equivalent for FastAPI headers (CSP, HSTS). Extend slowapi rate limiting to all /api/v1 endpoints. Frontend: CSRF token in forms.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Security scan: no XSS/SQLi vulnerabilities. Test rate limiting blocks excessive requests. Verify headers present in responses.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-27T03:04:15.184Z"
           },
           {
             "id": 5,
@@ -687,21 +710,23 @@
               4
             ],
             "details": "Use tools like Artillery/Locust for load tests (<500ms dashboard). Scan with Bandit, OWASP ZAP, npm audit. Test image upload/reorder, high concurrency orders. Document results and fixes.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Load test: 100 concurrent users, verify <500ms response. Security scan: zero critical vulnerabilities. Validate all test cases from parent task.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-02-27T03:09:05.590Z"
           }
         ],
         "complexity": 8,
         "recommendedSubtasks": 5,
-        "expansionPrompt": "Split into: 1) ERP product CRUD forms with image upload, 2) Order management with status workflows, 3) Inventory movement logging, 4) Security hardening (CSRF, sanitization, headers), 5) Load testing and security scanning."
+        "expansionPrompt": "Split into: 1) ERP product CRUD forms with image upload, 2) Order management with status workflows, 3) Inventory movement logging, 4) Security hardening (CSRF, sanitization, headers), 5) Load testing and security scanning.",
+        "updatedAt": "2026-02-27T03:09:05.590Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-02-25T05:11:55.422Z",
+      "lastModified": "2026-02-27T03:09:05.590Z",
       "taskCount": 10,
-      "completedCount": 5,
+      "completedCount": 9,
       "tags": [
         "master"
       ]

@@ -21,7 +21,23 @@ def _database_url() -> str:
     return _normalize_database_url(raw_url)
 
 
-engine = create_engine(_database_url(), pool_pre_ping=True)
+def _int_env(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+engine = create_engine(
+    _database_url(),
+    pool_pre_ping=True,
+    pool_size=_int_env("DB_POOL_SIZE", 30),
+    max_overflow=_int_env("DB_MAX_OVERFLOW", 40),
+    pool_timeout=_int_env("DB_POOL_TIMEOUT", 60),
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, class_=Session)
 
 

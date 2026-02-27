@@ -4,7 +4,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -69,6 +69,29 @@ def get_current_user(
     user = db.get(User, user_id)
     if user is None or not user.is_active:
         raise unauthorized
+    return user
+
+
+def get_current_user_optional(
+    db: Annotated[Session, Depends(get_db)],
+    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
+) -> User | None:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return None
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        return None
+    try:
+        payload = decode_access_token(token)
+        subject = payload.get("sub")
+        if subject is None:
+            return None
+        user_id = int(subject)
+    except (JWTError, ValueError):
+        return None
+    user = db.get(User, user_id)
+    if user is None or not user.is_active:
+        return None
     return user
 
 

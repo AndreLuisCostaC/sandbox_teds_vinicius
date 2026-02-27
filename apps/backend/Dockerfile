@@ -11,12 +11,18 @@ FROM base AS dev
 RUN pip install --no-cache-dir \
     alembic \
     "bcrypt<5" \
+    bleach \
+    chromadb \
     fastapi \
+    httpx \
+    langchain-chroma \
+    langchain-openai \
     passlib[bcrypt] \
     psycopg[binary] \
     python-jose[cryptography] \
     slowapi \
     sqlalchemy \
+    stripe \
     structlog \
     uvicorn[standard]
 COPY src/backend-generic/ /app/
@@ -27,12 +33,18 @@ FROM base AS prod
 RUN pip install --no-cache-dir \
     alembic \
     "bcrypt<5" \
+    bleach \
+    chromadb \
     fastapi \
+    httpx \
+    langchain-chroma \
+    langchain-openai \
     passlib[bcrypt] \
     psycopg[binary] \
     python-jose[cryptography] \
     slowapi \
     sqlalchemy \
+    stripe \
     structlog \
     uvicorn[standard]
 COPY src/backend-generic/ /app/

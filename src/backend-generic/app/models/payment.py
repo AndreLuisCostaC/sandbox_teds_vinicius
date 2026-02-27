@@ -19,6 +19,7 @@ class Payment(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     external_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    client_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     order = relationship("Order", back_populates="payments")
 

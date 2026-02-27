@@ -56,6 +56,7 @@ class ProductResponse(BaseModel):
     category_id: int
     is_active: bool
     status: ProductStatus
+    variant_id: int | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -67,7 +68,10 @@ class ProductResponse(BaseModel):
 
         is_active = getattr(value, "is_active", None)
         if is_active is not None and not hasattr(value, "status"):
-            # let field population proceed using computed dict fallback
+            variants = getattr(value, "variants", None) or []
+            first_variant = next((v for v in variants if getattr(v, "is_active", True)), None)
+            first_variant = first_variant or (variants[0] if variants else None)
+            variant_id = first_variant.id if first_variant else None
             return {
                 "id": getattr(value, "id"),
                 "name": getattr(value, "name"),
@@ -76,6 +80,7 @@ class ProductResponse(BaseModel):
                 "category_id": getattr(value, "category_id"),
                 "is_active": is_active,
                 "status": ProductStatus.active if is_active else ProductStatus.inactive,
+                "variant_id": variant_id,
             }
         return value
 

@@ -1,0 +1,457 @@
+# TedsGestaoVendas — Product Requirements Document
+
+---
+
+## 1. Introduction
+
+This Product Requirements Document (PRD) defines the functional and non-functional requirements for **tedsGestaoVendas**, a web-based sales management platform combining an e-commerce storefront with an integrated ERP (Enterprise Resource Planning) back office. The document serves as the single source of truth for the development team, product stakeholders, and QA engineers throughout the project lifecycle.
+
+The purpose of this document is to ensure that all stakeholders share a common understanding of system scope, expected behavior, technical constraints, and acceptance criteria before development begins. All decisions regarding architecture, features, and design should be traceable back to this document.
+
+---
+
+## 2. Product overview
+
+**tedsGestaoVendas** is a full-stack web application composed of two independent frontend interfaces — a consumer-facing online store and an administrative ERP panel — both powered by a shared RESTful backend API. The platform enables consumers to browse, select, and purchase products while giving store administrators real-time visibility into inventory, orders, sales metrics, and product management.
+
+The system is designed to be scalable, containerized, and ready for future integration with external ERP systems and logistics providers. An AI-powered semantic search layer (via ChromaDB and LangChain) enhances product discoverability beyond traditional keyword matching.
+
+| Attribute | Detail |
+|---|---|
+| Application name | tedsGestaoVendas |
+| Application type | E-commerce + ERP web application |
+| Architecture | 2 Frontends + 1 Backend API |
+| Frontend framework | Next.js |
+| Backend framework | Python FastAPI (Python 3.12+) |
+| Database | PostgreSQL + ChromaDB (vector) |
+| Containerization | Docker |
+| Payment gateways | Stripe or Mercado Pago |
+
+---
+
+## 3. Goals and objectives
+
+### 3.1 Business goals
+
+- Provide consumers with a fast, intuitive online shopping experience.
+- Equip store administrators with real-time tools to manage products, inventory, and orders.
+- Reduce manual effort in inventory control through automated stock deduction upon payment.
+- Support data-driven decision-making through a live sales and stock dashboard.
+
+### 3.2 Product objectives
+
+- Deliver a fully functional e-commerce storefront with cart, checkout, and payment integration.
+- Deliver a secure ERP panel with role-based access control (RBAC) for store staff.
+- Implement atomic, ACID-compliant order and payment processing to prevent overselling or data inconsistency.
+- Integrate semantic search to improve product discoverability.
+- Ensure sub-second dashboard query responses for key KPIs.
+- Achieve horizontal scalability via stateless architecture and Docker containerization.
+
+### 3.3 Success metrics
+
+- Zero oversell incidents due to atomic stock management.
+- Dashboard KPI endpoints respond in under 500 ms under normal load.
+- Checkout completion rate above industry baseline for target market.
+- 100% of critical stock changes reflected in the consumer store within 1 second.
+
+---
+
+## 4. Target audience
+
+### 4.1 Consumers (end users)
+
+Online shoppers who browse product catalogs, manage a shopping cart, and complete purchases through the storefront. They expect a fast, mobile-responsive experience with clear product information and a smooth payment flow.
+
+### 4.2 Store employees / administrators
+
+Internal staff responsible for day-to-day operations including product catalog management, inventory control, order fulfillment tracking, and sales performance monitoring. They require a secure, role-protected panel with real-time data.
+
+### 4.3 System administrators / developers
+
+Technical users responsible for deployment, infrastructure management, API integrations, and future extensibility. They require clean APIs, containerized services, structured logging, and monitoring hooks.
+
+---
+
+## 5. Features and requirements
+
+### 5.1 Frontend — consumer storefront
+
+#### 5.1.1 Navigation and catalog
+
+- Display a prominent hero banner with promotions, new arrivals, and calls to action (CTA).
+- Render a responsive product grid supporting 1, 2, and 4 column layouts depending on viewport.
+- Each product card must display: primary image, product name, price, available variations, and a promotional badge when applicable.
+- Support filtering by category and price range.
+- Support sorting by price (ascending/descending) and by best sellers.
+- Support both classic pagination and infinite scroll (configurable).
+- Implement full-text and faceted search across the product catalog.
+
+#### 5.1.2 Shopping cart
+
+- Allow consumers to add products (including specific variations) to the cart.
+- Allow quantity updates directly within the cart.
+- Allow product removal from the cart.
+- Calculate and display the running subtotal automatically on every change.
+- Persist cart state via `localStorage` for guest users and via the backend for authenticated users.
+- Synchronize cart contents with live inventory to prevent adding out-of-stock items.
+
+#### 5.1.3 Checkout
+
+- Display a full order summary before payment.
+- Capture required customer data (name, address, contact information).
+- Integrate with the configured payment gateway (Stripe or Mercado Pago).
+- Submit the confirmed order to the backend API.
+- Display real-time payment status and a post-purchase confirmation screen.
+- Trigger backend stock reduction upon successful payment.
+
+---
+
+### 5.2 Frontend — ERP administrative panel
+
+#### 5.2.1 Authentication
+
+- Provide login via email and password with OAuth support.
+- Expose the login entry point via the header navigation.
+- Enforce role-based access control (RBAC) so different employee profiles have appropriate permissions.
+
+#### 5.2.2 Dashboard
+
+Display the following KPIs in real time:
+
+- Total number of sales.
+- Total revenue (filterable by period).
+- Top-selling products.
+- Products with low stock levels (with configurable threshold alerts).
+- Current stock quantities per product.
+
+#### 5.2.3 Product management
+
+- Create new products with all required fields (name, description, price, category, images, variations, stock, status).
+- Edit existing product details.
+- Delete products (with safeguard for products associated with active orders).
+- Update product price independently.
+- Update stock quantity independently.
+- Manage product images (upload, reorder, delete).
+- All changes must be reflected immediately on the consumer storefront.
+
+#### 5.2.4 Order management
+
+- List all orders with key metadata (ID, customer, date, status, total).
+- View full order details (items, quantities, prices, customer data, payment info).
+- Update order status through the lifecycle: pending → paid → shipped → cancelled.
+
+---
+
+### 5.3 Backend API
+
+#### 5.3.1 Product endpoints
+
+- Full CRUD operations for products.
+- Paginated product listing.
+- Filtering by category, price range, and availability status.
+- Product data model includes: name, description, price, category, images, variations, stock count, and status.
+
+#### 5.3.2 Inventory management
+
+- Manual stock adjustment via ERP.
+- Automatic stock deduction upon confirmed payment.
+- Blocking of checkout when requested quantity exceeds available stock.
+- Full movement history log per product.
+- Configurable low-stock alert threshold per product.
+
+#### 5.3.3 Order processing
+
+- Create orders at checkout time with full item, quantity, and total data.
+- Associate every order with the purchasing customer.
+- Full order status lifecycle management.
+- Immutable order history.
+- All order-related database operations must be ACID-compliant transactions.
+
+#### 5.3.4 Payment processing
+
+Upon payment confirmation, the following must occur atomically:
+
+1. Validate available stock for all items.
+2. Register the order in the database.
+3. Deduct stock for each item.
+4. Record the payment transaction.
+5. Update dashboard metrics.
+6. Return success or rollback entirely on any failure.
+
+#### 5.3.5 Dashboard API
+
+Expose dedicated endpoints for:
+
+- Total sales count.
+- Revenue aggregated by configurable time periods.
+- Best-selling products ranked by volume.
+- Products below the low-stock threshold.
+- Total order count.
+- Core KPIs required by the ERP dashboard.
+
+#### 5.3.6 Semantic search (MCP + LangChain + ChromaDB)
+
+- Index all active products in the ChromaDB vector database.
+- Support semantic (natural language) product search.
+- Support traditional keyword-based search.
+- Return ranked, relevant results aligned with the current product catalog.
+- Keep the vector index in sync with product catalog changes.
+
+---
+
+### 5.4 Non-functional requirements
+
+#### 5.4.1 Performance
+
+- System must sustain high concurrency for both the storefront and checkout flows.
+- Inventory updates must propagate to the storefront in real time.
+- Dashboard endpoints must respond within 500 ms under normal load.
+- Images must implement lazy loading to minimize initial page load time.
+- The Next.js frontend must leverage SSR (Server-Side Rendering) and ISR (Incremental Static Regeneration) where appropriate.
+
+#### 5.4.2 Security
+
+- Protect all endpoints against SQL injection, XSS, and CSRF attacks.
+- Store all passwords using bcrypt hashing.
+- Authenticate API requests using signed JWT tokens with appropriate expiry.
+- Enforce RBAC to restrict ERP functionality to authorized roles only.
+- Secure all sensitive environment variables and credentials outside of version control.
+
+#### 5.4.3 Scalability
+
+- Backend API must be stateless to enable horizontal scaling.
+- All services must be containerized with Docker.
+- Frontend and backend must be independently deployable and scalable.
+- Architecture must be prepared for future integration with external ERP systems and logistics APIs.
+
+#### 5.4.4 Observability and quality
+
+- All services must emit structured JSON logs.
+- A global exception handler must catch and log unhandled API errors.
+- API availability and response times must be monitorable.
+- Codebase must follow modular design patterns to facilitate testing and maintenance.
+
+#### 5.4.5 UI/UX standards
+
+- All interfaces must be fully responsive across desktop, tablet, and mobile.
+- Color palette: black, gray, and light blue.
+- All interactive actions must provide visual feedback: loading indicators, success confirmations, and error messages.
+
+---
+
+## 6. User stories and acceptance criteria
+
+### 6.1 Consumer — catalog and navigation
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-101 | As a consumer, I want to see a hero banner on the homepage so I can quickly discover promotions and new products. | Banner renders on page load, displays at least one CTA, and links to the relevant product or category page. |
+| ST-102 | As a consumer, I want to browse products in a responsive grid so I can view the catalog comfortably on any device. | Grid renders in 1, 2, or 4 columns depending on screen width. Each card shows image, name, price, variations, and promotional badge when applicable. |
+| ST-103 | As a consumer, I want to filter products by category and price so I can narrow down relevant results. | Filters update the product list without a full page reload. Applying both filters simultaneously returns the correct subset. |
+| ST-104 | As a consumer, I want to sort products by price and popularity so I can find the best options quickly. | Selecting a sort option reorders the displayed list immediately. Sort state persists across pagination. |
+| ST-105 | As a consumer, I want to search for products using natural language so I can find items even if I don't know the exact name. | Search query triggers semantic and keyword matching. Results are ranked by relevance. Empty queries return the full catalog. |
+| ST-106 | As a consumer, I want to paginate or infinitely scroll through products so I can browse large catalogs without performance degradation. | Products load in batches. The next batch loads on page change or scroll trigger. No duplicate products appear across pages. |
+
+---
+
+### 6.2 Consumer — shopping cart
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-201 | As a consumer, I want to add a product (with a specific variation) to my cart so I can purchase it later. | Product appears in the cart with selected variation and quantity 1. A visual confirmation is shown. |
+| ST-202 | As a consumer, I want to update the quantity of items in my cart so I can buy more or fewer units. | Quantity changes update the subtotal in real time. Quantities exceeding available stock are blocked with a clear error message. |
+| ST-203 | As a consumer, I want to remove items from my cart so I can change my mind before purchasing. | Item is removed immediately. Subtotal recalculates. If cart is empty, an appropriate empty state is displayed. |
+| ST-204 | As a consumer, I want my cart to be saved between sessions so I don't lose my selections if I close the browser. | Cart contents are persisted in `localStorage` for guests and in the backend for authenticated users. Contents are restored on next visit. |
+| ST-205 | As a consumer, I want the cart to warn me if an item goes out of stock so I can adjust my order before checkout. | If stock drops to zero for a cart item between sessions, a warning is displayed and the item is either flagged or removed. |
+
+---
+
+### 6.3 Consumer — checkout and payment
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-301 | As a consumer, I want to see a full order summary before confirming payment so I can review my purchase. | Summary lists all items, quantities, individual prices, subtotal, and total. |
+| ST-302 | As a consumer, I want to enter my delivery and contact information during checkout so the store knows where to send my order. | All required fields are validated before submission. Invalid or missing fields display inline error messages. |
+| ST-303 | As a consumer, I want to pay using an integrated gateway so I can complete my purchase securely. | Payment form is rendered by the gateway SDK. A test transaction succeeds and is confirmed. A failed payment returns an appropriate error. |
+| ST-304 | As a consumer, I want to see a confirmation page after a successful payment so I know my order was placed. | Confirmation displays order ID, summary, and expected next steps. Backend has created the order record and deducted stock. |
+| ST-305 | As a consumer, I want the system to block my purchase if an item goes out of stock during checkout so I'm not charged for something that can't be fulfilled. | If stock becomes insufficient between cart and payment confirmation, checkout is blocked with a clear message and no charge is made. |
+
+---
+
+### 6.4 ERP — authentication and access control
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-401 | As an employee, I want to log in with my email and password so I can access the ERP panel securely. | Valid credentials issue a JWT token and redirect to the dashboard. Invalid credentials display an error without revealing which field is wrong. |
+| ST-402 | As an employee, I want to log in using OAuth (e.g., Google) so I can authenticate without a separate password. | OAuth flow completes and associates the OAuth identity with an ERP user account with the correct role. |
+| ST-403 | As an administrator, I want role-based access control so that employees can only access the features their role permits. | A user with the "employee" role cannot access admin-only routes. Unauthorized access attempts return HTTP 403. JWT tokens encode the user's role. |
+| ST-404 | As a system, I want JWT tokens to expire after a defined period so that stale sessions do not remain valid indefinitely. | Expired tokens are rejected by all protected endpoints. The frontend prompts the user to re-authenticate. |
+
+---
+
+### 6.5 ERP — dashboard
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-501 | As an employee, I want to see total sales and revenue on the dashboard so I can monitor business performance at a glance. | Dashboard displays total order count, total revenue, and allows filtering by time period. Data matches the underlying order records. |
+| ST-502 | As an employee, I want to see the top-selling products so I can understand demand patterns. | Dashboard lists the top N products ranked by units sold. Rank updates in real time as orders are processed. |
+| ST-503 | As an employee, I want to see alerts for products with low stock so I can reorder before running out. | Products below the configured threshold appear in a dedicated low-stock section. The alert clears when stock is replenished above the threshold. |
+
+---
+
+### 6.6 ERP — product management
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-601 | As an employee, I want to create a new product so it becomes available for purchase in the storefront. | A product created in the ERP appears in the consumer storefront within 1 second. All required fields are validated before saving. |
+| ST-602 | As an employee, I want to edit an existing product's details so I can keep the catalog accurate. | Changes are saved and reflected in the storefront in real time. Previous values are replaced. |
+| ST-603 | As an employee, I want to delete a product so I can remove discontinued items from the catalog. | Deleted products no longer appear in the storefront. Products linked to existing orders are protected from deletion (soft-delete or block with error). |
+| ST-604 | As an employee, I want to update a product's price independently so I can run promotions without editing the full product. | Price change is saved and reflected in the storefront immediately. The old price is not retained in active cart sessions beyond one user interaction. |
+| ST-605 | As an employee, I want to upload and manage product images so customers can see what they're buying. | Images upload successfully, are reorderable, and deletable. The primary image is displayed on the product card in the storefront. |
+
+---
+
+### 6.7 ERP — order management
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-701 | As an employee, I want to see a list of all orders so I can monitor and manage fulfillment. | Order list displays order ID, customer name, date, status, and total. List is sortable and filterable by status. |
+| ST-702 | As an employee, I want to view the full details of an order so I can understand what was purchased and by whom. | Detail view shows all items, quantities, prices, customer information, payment method, and current status. |
+| ST-703 | As an employee, I want to update an order's status so I can communicate fulfillment progress. | Status can be updated through the allowed transitions (pending → paid → shipped → cancelled). Invalid transitions are blocked. The change is logged with a timestamp. |
+
+---
+
+### 6.8 Database and data integrity
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-801 | As a developer, I want a well-normalized PostgreSQL schema so the data is consistent, queryable, and maintainable. | Schema includes entities for: users, roles, products, product_variants, categories, images, inventory_movements, carts, cart_items, orders, order_items, payments, and transactions. All foreign key relationships are enforced. |
+| ST-802 | As a system, I want order creation and stock deduction to execute within a single ACID transaction so partial failures never result in inconsistent data. | If any step of the order-payment flow fails, the entire transaction is rolled back. No stock is deducted without a committed order record, and vice versa. |
+| ST-803 | As a developer, I want an inventory movement history table so every stock change is auditable. | Every stock change (manual update or automatic deduction) creates a row in `inventory_movements` with product ID, delta, reason, and timestamp. |
+
+---
+
+### 6.9 Semantic search
+
+| ID | User story | Acceptance criteria |
+|---|---|---|
+| ST-901 | As a consumer, I want to search for products using descriptive phrases so I can find items even with imprecise terminology. | A search for "comfortable running shoes" returns relevant footwear even if no product is named exactly that. |
+| ST-902 | As a developer, I want product embeddings to update when a product is created or edited so search results remain current. | Within a configurable interval (or synchronously), a newly created or edited product is re-indexed in ChromaDB. The updated product appears in relevant semantic search results. |
+
+---
+
+## 7. Technical requirements / stack
+
+### 7.1 Architecture overview
+
+The system is split into three independently deployable services:
+
+- **Store frontend** — Next.js application serving the consumer-facing storefront.
+- **ERP frontend** — Next.js application serving the administrative panel.
+- **Backend API** — Python FastAPI application exposing all REST endpoints consumed by both frontends.
+
+### 7.2 Technology stack
+
+| Layer | Technology |
+|---|---|
+| Store frontend | Next.js (SSR + ISR) |
+| ERP frontend | Next.js |
+| Backend | Python FastAPI, Python 3.12+ |
+| ORM | SQLAlchemy |
+| Data validation | Pydantic |
+| Relational database | PostgreSQL |
+| Vector database | ChromaDB |
+| AI / search layer | LangChain + MCP |
+| Authentication | JWT + OAuth (bcrypt for passwords) |
+| Payment gateways | Stripe or Mercado Pago |
+| Containerization | Docker (Docker Compose for local; orchestrator TBD for production) |
+
+### 7.3 API design
+
+- RESTful API following standard HTTP conventions (GET, POST, PUT/PATCH, DELETE).
+- All endpoints return JSON.
+- All protected endpoints require a valid Bearer JWT token in the `Authorization` header.
+- API versioning via URL prefix (e.g., `/api/v1/`).
+- Pydantic schemas enforce request and response validation.
+
+### 7.4 Data models (key entities)
+
+| Entity | Key fields |
+|---|---|
+| User | id, email, password_hash, role, oauth_provider, created_at |
+| Product | id, name, description, price, category_id, status, created_at, updated_at |
+| ProductVariant | id, product_id, name, value |
+| Inventory | id, product_id, quantity, low_stock_threshold |
+| InventoryMovement | id, product_id, delta, reason, order_id (nullable), created_at |
+| Order | id, user_id, status, total, created_at, updated_at |
+| OrderItem | id, order_id, product_id, variant_id, quantity, unit_price |
+| Payment | id, order_id, gateway, gateway_transaction_id, status, amount, created_at |
+| Cart | id, user_id (nullable), session_token, updated_at |
+| CartItem | id, cart_id, product_id, variant_id, quantity |
+
+### 7.5 Security requirements
+
+- All API routes except public catalog endpoints are protected by JWT middleware.
+- Passwords stored with bcrypt, minimum cost factor 12.
+- CORS restricted to known frontend origins.
+- Rate limiting applied to authentication endpoints.
+- Input sanitization on all user-supplied data to prevent injection attacks.
+- CSRF tokens required for state-changing operations from browser clients.
+
+### 7.6 Infrastructure and deployment
+
+- Each service (store frontend, ERP frontend, backend API, PostgreSQL, ChromaDB) runs in its own Docker container.
+- Docker Compose file provided for local development orchestration.
+- Environment configuration managed exclusively via environment variables (no secrets in code).
+- Stateless backend allows horizontal scaling behind a load balancer.
+
+---
+
+## 8. Design and user interface
+
+### 8.1 Design principles
+
+- **Clarity** — interfaces must communicate product information and system status without ambiguity.
+- **Responsiveness** — all layouts must adapt seamlessly to mobile (320 px+), tablet, and desktop viewports.
+- **Feedback** — every user action must produce visible feedback: loading spinners during async operations, success toasts on completion, and inline or modal error messages on failure.
+- **Consistency** — components, spacing, typography, and colors must be consistent across both frontends.
+
+### 8.2 Color palette
+
+| Token | Color | Usage |
+|---|---|---|
+| Primary | Black (`#000000` or near-black) | Headlines, primary text, strong UI elements |
+| Secondary | Gray (`#6B7280` or similar) | Subtext, borders, inactive states |
+| Accent | Light blue (`#60A5FA` or similar) | CTAs, links, highlights, active states |
+| Background | White / Off-white | Page backgrounds |
+| Error | Red (`#EF4444`) | Error messages, destructive actions |
+| Success | Green (`#22C55E`) | Confirmation messages, success badges |
+
+### 8.3 Consumer storefront UI
+
+- Full-width hero banner at the top of the homepage with large typography and a prominent CTA button.
+- Sticky header with search bar, cart icon (with item count badge), and navigation links.
+- Product grid with hover effects on cards.
+- Sidebar or top-bar filter and sort controls.
+- Cart accessible via a slide-over panel without navigating away from the catalog.
+- Checkout presented as a multi-step flow: review → customer info → payment → confirmation.
+
+### 8.4 ERP panel UI
+
+- Left-side navigation menu with icons and labels for each section (dashboard, products, orders).
+- Dashboard with card-based KPI widgets and charts for revenue trends and stock alerts.
+- Data tables for product and order lists with inline status badges and action buttons.
+- Modal dialogs for creating and editing products, with image upload support.
+- Real-time update indicators (e.g., subtle pulse or timestamp) on dashboard metrics.
+
+### 8.5 Accessibility
+
+- All interactive elements must be keyboard-navigable.
+- Color contrast ratios must meet WCAG 2.1 AA standards.
+- Images must include descriptive `alt` text.
+- Form fields must have associated `<label>` elements or `aria-label` attributes.
+
+---
+
+*Document version: 1.0 — tedsGestaoVendas PRD*
+
